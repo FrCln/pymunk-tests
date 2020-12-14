@@ -43,10 +43,9 @@ class Tank:
         if y < self.y:
             self.angle = math.degrees(math.atan2(self.y - y, x - self.x)) - 90
 
-    def fire(self, x, y) -> pymunk.Body:
+    def fire(self, x, y) -> pymunk.shapes:
         dx = x - self.x
         dy = y - self.y
-        distance = math.hypot(dx, dy)
         imp_x = impulse * dx
         imp_y = impulse * dy
         ball_moment = pymunk.moment_for_circle(ball_mass, 0, ball_radius)
@@ -54,10 +53,13 @@ class Tank:
         ball_body.position = self._calculate_gun_end()
         ball_body.apply_impulse_at_local_point((imp_x, imp_y), (0, 0))
         ball_shape = pymunk.Circle(ball_body, ball_radius)
+        ball_shape.color = pygame.color.Color('white')
         ball_shape.elasticity = 0.5
         ball_shape.friction = 0.1
+        ball_shape.collision_type = 2
+        ball_shape.ttl = 2
         self.space.add(ball_body, ball_shape)
-        return ball_body
+        return ball_shape
 
     def _calculate_gun_end(self):
         gun_size = self.gun_image.get_height()

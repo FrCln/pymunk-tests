@@ -1,23 +1,11 @@
-import math
-
 import pygame as pg
 import pymunk.pygame_util
 from pymunk import Vec2d
 
-from tank import Tank, ball_radius
-
+from tank import Tank
 
 RES = WIDTH, HEIGHT = 800, 600
 FPS = 60
-
-pg.init()
-surface = pg.display.set_mode(RES)
-clock = pg.time.Clock()
-
-pymunk.pygame_util.positive_y_is_up = False
-draw_options = pymunk.pygame_util.DrawOptions(surface)
-space = pymunk.Space()
-space.gravity = 0, 500
 
 fire_position = fire_x, fire_y = 50, 300
 
@@ -45,9 +33,9 @@ def create_building(space):
             10
         ),
     ]
-    for l in static_lines:
-        l.friction = 0.9
-        l.elasticity = 0.3
+    for line in static_lines:
+        line.friction = 0.9
+        line.elasticity = 0.3
     space.add(*static_lines)
 
     boxes = []
@@ -63,18 +51,45 @@ def create_building(space):
             shape = pymunk.Poly.create_box(body, (size, size))
             shape.elasticity = 0.5
             shape.friction = 0.5
+            shape.collision_type = 1
+            shape.ttl = 5
+            shape.color = (255, 0, 0, 0)
+            shape.cache_bb()
             space.add(body, shape)
-            boxes.append(body)
+            boxes.append(shape)
     return boxes
 
 
+def separate(arbiter, space, data):
+    box, ball = arbiter.shapes
+    ball.ttl -= 1
+    box.ttl -= 1
+    if box.ttl >= 0:
+        box.color = (255 // 5 * box.ttl, 0, 0, 0)
+
+
+def on_screen(box):
+    l, b, r, t = box.bb
+    return 0 < l < WIDTH and 0 < b < HEIGHT
+
+
 def main():
+    pg.init()
+    surface = pg.display.set_mode(RES)
+    clock = pg.time.Clock()
+
+    pymunk.pygame_util.positive_y_is_up = False
+    draw_options = pymunk.pygame_util.DrawOptions(surface)
+    space = pymunk.Space()
+    space.gravity = 0, 1000
+    handler = space.add_collision_handler(1, 2)
+    handler.separate = separate
+
     balls = []
     boxes = create_building(space)
     tank = Tank(fire_x, fire_y, surface, space)
 
     while True:
-        surface.fill(pg.Color('black'))
 
         for event in pg.event.get():
             if event.type == pg.QUIT:
@@ -84,15 +99,32 @@ def main():
             elif event.type == pg.MOUSEMOTION:
                 tank.aim(*event.pos)
 
+        for box in boxes[:]:
+            if box.ttl < 1 or not on_screen(box):
+                space.remove(box, box.body)
+                boxes.remove(box)
+
+        for ball in balls[:]:
+            if ball.ttl < 1:
+                space.remove(ball, ball.body)
+                balls.remove(ball)
+            elif ball.ttl < 2:
+                ball.ttl -= 1
+
+        clock.tick(FPS)
+        surface.fill(pg.Color('black'))
         space.step(1 / FPS)
         space.debug_draw(draw_options)
 
-        [pg.draw.circle(surface, pg.Color('white'), (int(ball.position[0]), int(ball.position[1])),
-                        ball_radius) for ball in balls]
+        if not boxes:
+            font = pg.font.SysFont("Arial", 16)
+            text = font.render('Congratulations!', True, pg.Color('white'))
+            w = text.get_width()
+            surface.blit(text, ((WIDTH - w) // 2, 20))
+
         tank.draw()
 
         pg.display.flip()
-        clock.tick(FPS)
 
 
 try:
