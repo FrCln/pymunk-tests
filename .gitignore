@@ -130,3 +130,4 @@ dmypy.json
 # Sublime stuff
 *.sublime-project
 *.sublime-workspace
+.idea
