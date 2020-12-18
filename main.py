@@ -1,16 +1,19 @@
+from typing import List
+
 import pygame as pg
 import pymunk.pygame_util
 from pymunk import Vec2d
 
+from explosion import Explosion
 from tank import Tank
 
 RES = WIDTH, HEIGHT = 800, 600
 FPS = 60
 
-fire_position = fire_x, fire_y = 50, 300
+tank_x, tank_y = 50, 300
 
 
-def create_building(space):
+def create_building(space: pymunk.Space) -> List[pymunk.Shape]:
     size = 20
     mass = 10.0
     init_x = 500
@@ -62,10 +65,11 @@ def create_building(space):
 
 def separate(arbiter, space, data):
     box, ball = arbiter.shapes
-    ball.ttl -= 1
-    box.ttl -= 1
-    if box.ttl >= 0:
-        box.color = (255 // 5 * box.ttl, 0, 0, 0)
+    if ball.body.velocity.get_length_sqrd() > 2000:
+        ball.ttl -= 1
+        box.ttl -= 1
+        if box.ttl >= 0:
+            box.color = (255 // 5 * box.ttl, 0, 0, 0)
 
 
 def on_screen(box):
@@ -85,11 +89,13 @@ def main():
     handler = space.add_collision_handler(1, 2)
     handler.separate = separate
 
-    balls = []
+    balls: List[pymunk.Shape] = []
     boxes = create_building(space)
-    tank = Tank(fire_x, fire_y, surface, space)
+    explosions: List[Explosion] = []
+    tank = Tank(tank_x, tank_y, surface, space)
 
     while True:
+        dt = clock.tick(FPS)
 
         for event in pg.event.get():
             if event.type == pg.QUIT:
@@ -105,13 +111,18 @@ def main():
                 boxes.remove(box)
 
         for ball in balls[:]:
-            if ball.ttl < 1:
+            if ball.ttl < 1 or not on_screen(ball):
                 space.remove(ball, ball.body)
                 balls.remove(ball)
-            elif ball.ttl < 2:
-                ball.ttl -= 1
+                center = ball.body.position
+                exp = Explosion(surface, center.x, center.y, 300)
+                explosions.append(exp)
 
-        clock.tick(FPS)
+        for explosion in explosions[:]:
+            explosion.update(dt)
+            if not explosion.active:
+                explosions.remove(explosion)
+
         surface.fill(pg.Color('black'))
         space.step(1 / FPS)
         space.debug_draw(draw_options)
@@ -123,6 +134,8 @@ def main():
             surface.blit(text, ((WIDTH - w) // 2, 20))
 
         tank.draw()
+        for explosion in explosions:
+            explosion.draw()
 
         pg.display.flip()
 

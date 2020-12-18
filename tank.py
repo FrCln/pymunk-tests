@@ -3,7 +3,7 @@ import os
 from typing import Tuple
 
 import pygame
-import pymunk.pygame_util
+import pymunk
 
 
 ball_mass, ball_radius = 20, 7
@@ -57,7 +57,7 @@ class Tank:
         ball_shape.elasticity = 0.5
         ball_shape.friction = 0.1
         ball_shape.collision_type = 2
-        ball_shape.ttl = 2
+        ball_shape.ttl = 1
         self.space.add(ball_body, ball_shape)
         return ball_shape
 
