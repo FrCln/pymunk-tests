@@ -54,10 +54,9 @@ def create_building(space: pymunk.Space) -> List[pymunk.Shape]:
             shape = pymunk.Poly.create_box(body, (size, size))
             shape.elasticity = 0.5
             shape.friction = 0.5
-            shape.collision_type = 1
+            shape.collision_type = 10
             shape.ttl = 5
             shape.color = (255, 0, 0, 0)
-            shape.cache_bb()
             space.add(body, shape)
             boxes.append(shape)
     return boxes
@@ -86,7 +85,7 @@ def main():
     draw_options = pymunk.pygame_util.DrawOptions(surface)
     space = pymunk.Space()
     space.gravity = 0, 1000
-    handler = space.add_collision_handler(1, 2)
+    handler = space.add_collision_handler(10, 2)
     handler.separate = separate
 
     balls: List[pymunk.Shape] = []
