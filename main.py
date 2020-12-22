@@ -127,7 +127,7 @@ def main():
         space.debug_draw(draw_options)
 
         if not boxes:
-            font = pg.font.SysFont("Arial", 16)
+            font = pg.font.SysFont("Arial", 32)
             text = font.render('Congratulations!', True, pg.Color('white'))
             w = text.get_width()
             surface.blit(text, ((WIDTH - w) // 2, 20))
