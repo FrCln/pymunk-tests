@@ -122,7 +122,7 @@ def main():
             if not explosion.active:
                 explosions.remove(explosion)
 
-        surface.fill(pg.Color('black'))
+        surface.fill((77, 77, 77))
         space.step(1 / FPS)
         space.debug_draw(draw_options)
 
